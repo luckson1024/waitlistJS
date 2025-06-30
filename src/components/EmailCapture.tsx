@@ -4,6 +4,7 @@ import { validateEmail } from '../utils/validation';
 import { useContent } from '../contexts/ContentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import Footer from './Footer';
+import { captureEmail } from '../services/waitlistService';
 
 interface EmailCaptureProps {
   onEmailSubmit: (email: string) => void;
@@ -19,7 +20,7 @@ export default function EmailCapture({ onEmailSubmit }: EmailCaptureProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailError = validateEmail(email);
-    
+
     if (emailError) {
       setError(emailError);
       return;
@@ -27,12 +28,19 @@ export default function EmailCapture({ onEmailSubmit }: EmailCaptureProps) {
 
     setIsLoading(true);
     setError('');
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    onEmailSubmit(email);
-    setIsLoading(false);
+
+    try {
+      const response = await captureEmail(email);
+      if (response.success) {
+        onEmailSubmit(email);
+      } else {
+        setError(response.error?.message || 'An unexpected error occurred.');
+      }
+    } catch {
+      setError('Failed to submit email. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

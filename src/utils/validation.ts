@@ -9,7 +9,7 @@ export const validateEmail = (email: string): string => {
 
 export const validatePhone = (phone: string): string => {
   if (!phone.trim()) return 'Phone number is required';
-  const phoneRegex = /^[\+]?[\d\s\-\(\)]+$/;
+  const phoneRegex = /^[+]?[\d\s()-]+$/;
   if (!phoneRegex.test(phone) || phone.length < 10) return 'Please enter a valid phone number';
   return '';
 };

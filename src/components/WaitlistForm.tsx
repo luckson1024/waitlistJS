@@ -7,6 +7,7 @@ import { allCountries } from '../data/allCountries';
 import { useContent } from '../contexts/ContentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import Footer from './Footer';
+import { updateWaitlistEntry } from '../services/waitlistService';
 
 interface WaitlistFormProps {
   initialEmail: string;
@@ -43,19 +44,26 @@ export default function WaitlistForm({ initialEmail, onFormSubmit, onBack }: Wai
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validateWaitlistForm(formData);
-    
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    onFormSubmit(formData);
-    setIsLoading(false);
+
+    try {
+      const response = await updateWaitlistEntry(formData.email, formData);
+      if (response.success) {
+        onFormSubmit(formData);
+      } else {
+        setErrors({ form: response.error?.message || 'An unexpected error occurred.' });
+      }
+    } catch {
+      setErrors({ form: 'Failed to submit form. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

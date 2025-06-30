@@ -1,5 +1,4 @@
-import React from 'react';
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, Music, ShoppingBag } from 'lucide-react';
+import { Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, Music, ShoppingBag } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 export default function Footer() {

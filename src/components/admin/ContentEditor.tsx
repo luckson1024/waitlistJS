@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Save, RotateCcw, Upload, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { Save, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { useContent } from '../../contexts/ContentContext';
 import { SiteContent } from '../../types/content';
 

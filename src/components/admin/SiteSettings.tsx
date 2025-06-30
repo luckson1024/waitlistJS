@@ -8,19 +8,15 @@ import {
   Mail, 
   Shield, 
   Palette, 
-  Settings as SettingsIcon,
   Eye,
   EyeOff,
   AlertTriangle,
-  CheckCircle,
   Share2,
   BarChart3,
   Bell,
-  Lock,
   Wrench,
   FileText,
   Smartphone,
-  Image,
   Plus,
   Trash2
 } from 'lucide-react';
@@ -28,13 +24,13 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { SiteSettings } from '../../types/settings';
 
 export default function AdminSiteSettings() {
-  const { settings, updateSettings, resetSettings, exportSettings } = useSettings();
+  const { settings, updateSettings, exportSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState<SiteSettings>(settings);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [showApiKeys, setShowApiKeys] = useState(false);
 
-  const handleInputChange = (field: keyof SiteSettings | string, value: any) => {
+  const handleInputChange = (field: keyof SiteSettings | string, value: unknown) => {
     const keys = field.split('.');
     if (keys.length === 1) {
       setLocalSettings(prev => ({ ...prev, [field]: value }));
@@ -42,7 +38,7 @@ export default function AdminSiteSettings() {
       setLocalSettings(prev => ({
         ...prev,
         [keys[0]]: {
-          ...(prev[keys[0] as keyof SiteSettings] as any),
+          ...(prev[keys[0] as keyof SiteSettings] as object),
           [keys[1]]: value
         }
       }));
@@ -50,9 +46,9 @@ export default function AdminSiteSettings() {
       setLocalSettings(prev => ({
         ...prev,
         [keys[0]]: {
-          ...(prev[keys[0] as keyof SiteSettings] as any),
+          ...(prev[keys[0] as keyof SiteSettings] as object),
           [keys[1]]: {
-            ...((prev[keys[0] as keyof SiteSettings] as any)[keys[1]]),
+            ...((prev[keys[0] as keyof SiteSettings] as Record<string, unknown>)[keys[1]] as Record<string, unknown>),
             [keys[2]]: value
           }
         }
@@ -97,11 +93,6 @@ export default function AdminSiteSettings() {
     setHasChanges(false);
   };
 
-  const handleResetToDefault = () => {
-    resetSettings();
-    setLocalSettings(settings);
-    setHasChanges(false);
-  };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -112,7 +103,7 @@ export default function AdminSiteSettings() {
           const importedSettings = JSON.parse(e.target?.result as string);
           setLocalSettings(importedSettings);
           setHasChanges(true);
-        } catch (error) {
+        } catch {
           alert('Invalid settings file format');
         }
       };
@@ -139,7 +130,7 @@ export default function AdminSiteSettings() {
   const renderInput = (
     label: string,
     field: string,
-    type: 'text' | 'email' | 'url' | 'number' | 'password' = 'text',
+    type: 'text' | 'email' | 'url' | 'number' | 'password' | 'tel' | 'datetime-local' = 'text',
     placeholder?: string,
     description?: string
   ) => (
@@ -148,7 +139,10 @@ export default function AdminSiteSettings() {
       <input
         type={type}
         value={field.includes('.') ? 
-          field.split('.').reduce((obj, key) => obj?.[key], localSettings as any) || '' :
+          (() => {
+            const result = field.split('.').reduce((obj: unknown, key: string) => (obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined), localSettings);
+            return (typeof result === 'string' || typeof result === 'number') ? result : '';
+          })() :
           (localSettings[field as keyof SiteSettings] as string) || ''
         }
         onChange={(e) => handleInputChange(field, e.target.value)}
@@ -171,7 +165,10 @@ export default function AdminSiteSettings() {
         <input
           type="text"
           value={field.includes('.') ? 
-            field.split('.').reduce((obj, key) => obj?.[key], localSettings as any) || '' :
+            (() => {
+              const result = field.split('.').reduce((obj: unknown, key: string) => (obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined), localSettings);
+              return (typeof result === 'string' || typeof result === 'number') ? result : '';
+            })() :
             (localSettings[field as keyof SiteSettings] as string) || ''
           }
           onChange={(e) => handleInputChange(field, e.target.value)}
@@ -221,7 +218,10 @@ export default function AdminSiteSettings() {
         type="checkbox"
         id={field}
         checked={field.includes('.') ? 
-          field.split('.').reduce((obj, key) => obj?.[key], localSettings as any) || false :
+          (() => {
+            const result = field.split('.').reduce((obj: unknown, key: string) => (obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined), localSettings);
+            return typeof result === 'boolean' ? result : false;
+          })() :
           (localSettings[field as keyof SiteSettings] as boolean) || false
         }
         onChange={(e) => handleInputChange(field, e.target.checked)}
