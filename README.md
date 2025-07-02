@@ -1,6 +1,6 @@
 # Myzuwa Waitlist Platform
 
-A modern, full-featured waitlist application with comprehensive admin panel for managing e-commerce and music platform launches.
+A modern, full-featured waitlist application with a comprehensive admin panel for managing e-commerce and music platform launches. Built with React (frontend) and Laravel PHP (backend), fully compatible with InfinityFree and similar PHP/MySQL hosts.
 
 ## 🚀 Features
 
@@ -14,11 +14,14 @@ A modern, full-featured waitlist application with comprehensive admin panel for 
 
 ### Admin Panel Features
 - **Dashboard Analytics**: Real-time statistics and data visualization
-- **Waitlist Management**: View, filter, search, and export waitlist entries
+- **Waitlist Management**: View, filter, search, delete (single/bulk), and export waitlist entries
 - **Content Management**: Edit all frontend text content dynamically
-- **Site Settings**: Configure SEO, social media, email settings, and more
+- **Site Settings**: Configure SEO, social media, email, Gemini API, and more
 - **User Management**: Secure admin authentication
 - **Data Export**: CSV export functionality for waitlist data
+- **Gemini AI Security Agent**: Chat with Gemini for security/compliance
+- **Logo & Social Media Management**: Upload logo, manage social links
+- **Confirmation Email Management**: Customizable confirmation email message
 - **Responsive Design**: Mobile-friendly admin interface
 
 ## 🛠 Tech Stack
@@ -31,17 +34,18 @@ A modern, full-featured waitlist application with comprehensive admin panel for 
 - **Lucide React** for icons
 - **Context API** for state management
 
-### Backend (Recommended Architecture)
-- **Node.js** with Express.js or **Next.js API Routes**
-- **TypeScript** for type safety
-- **JWT** for authentication
-- **bcrypt** for password hashing
-- **Rate limiting** for API protection
+### Backend
+- **Laravel 10+** (PHP 8.3+)
+- **Eloquent ORM** for database access
+- **MySQL 8.0+** (or MariaDB 10.6+)
+- **Laravel Auth** for authentication
+- **Laravel Mail** for email/confirmation
+- **Gemini API** for AI-powered admin security agent
+- **Rate limiting, validation, and security best practices**
 
 ### Database
-- **PostgreSQL** (Primary recommendation)
-- **MongoDB** (Alternative NoSQL option)
-- **Redis** for caching and sessions
+- **MySQL 8.0+** (InfinityFree or compatible host)
+- Schema defined in [`database/myzuwa_schema.sql`](./backend-laravel/database/myzuwa_schema.sql)
 
 ## 📁 Project Structure
 
@@ -61,6 +65,9 @@ myzuwa-waitlist/
 │   ├── utils/               # Utility functions
 │   ├── data/                # Static data (countries, etc.)
 │   └── App.tsx              # Main application
+├── backend-laravel/         # Laravel backend (API, migrations, etc.)
+│   ├── database/            # SQL schema, migrations, seeders
+│   └── ...
 ├── docs/                    # Documentation
 ├── public/                  # Static assets
 └── package.json
@@ -69,7 +76,9 @@ myzuwa-waitlist/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ and npm
+- PHP 8.3+ and Composer (for backend)
+- Node.js 18+ and npm (for frontend build)
+- MySQL 8.0+
 - Git
 
 ### Installation
@@ -80,20 +89,40 @@ git clone https://github.com/yourusername/myzuwa-waitlist.git
 cd myzuwa-waitlist
 ```
 
-2. **Install dependencies**
+2. **Install frontend dependencies**
 ```bash
 npm install
 ```
 
-3. **Start development server**
+3. **Install backend dependencies**
+```bash
+cd backend-laravel
+composer install
+```
+
+4. **Set up the database**
+- Create a MySQL database (use InfinityFree or your host's control panel)
+- Import [`database/myzuwa_schema.sql`](./backend-laravel/database/myzuwa_schema.sql) using phpMyAdmin
+- Copy `.env.example` to `.env` and update DB credentials, SSL, and Gemini API key
+- Run migrations (if needed):
+```bash
+php artisan migrate
+```
+
+5. **Start development servers**
+- **Backend:**
+```bash
+php artisan serve
+```
+- **Frontend:**
 ```bash
 npm run dev
 ```
 
-4. **Access the application**
+6. **Access the application**
 - Frontend: http://localhost:5173
 - Admin Panel: http://localhost:5173/admin
-- Admin Credentials: `admin` / `myzuwa2024`
+- Admin Credentials: (set in DB or via seeder)
 
 ### Build for Production
 ```bash
@@ -103,7 +132,7 @@ npm run preview
 
 ## 📊 Data Models
 
-See [Database Schema Documentation](./docs/DATABASE.md) for detailed information.
+See [Database Schema Documentation](./docs/DATABASE.md) and [`database/myzuwa_schema.sql`](./backend-laravel/database/myzuwa_schema.sql) for detailed information.
 
 ## 🔧 API Documentation
 
@@ -124,11 +153,12 @@ All frontend content can be managed through the admin panel:
 
 ## 🔐 Security
 
-- Admin authentication with session management
-- Rate limiting on form submissions
-- Input validation and sanitization
-- CSRF protection (when backend is implemented)
-- Secure password hashing
+- Admin authentication with session management (Laravel Auth)
+- Rate limiting on form submissions (Laravel middleware)
+- Input validation and sanitization (Laravel validation)
+- CSRF protection (Laravel)
+- Secure password hashing (bcrypt)
+- SSL support for frontend and MySQL (see `.env`)
 
 ## 📈 Analytics & Monitoring
 
@@ -143,18 +173,14 @@ Configure tracking IDs in the admin settings panel.
 ## 🚀 Deployment
 
 ### Frontend Deployment
-The application can be deployed to:
-- **Vercel** (Recommended for Next.js)
-- **Netlify** (Static hosting)
-- **AWS S3 + CloudFront**
-- **DigitalOcean App Platform**
+- Build with `npm run build` and upload `dist/` to InfinityFree or any static host
 
 ### Backend Deployment
-Recommended platforms:
-- **Railway** (Easy Node.js deployment)
-- **Heroku** (Traditional PaaS)
-- **AWS ECS/Lambda** (Scalable cloud)
-- **DigitalOcean Droplets** (VPS)
+- Upload `backend-laravel` to InfinityFree (or compatible PHP host)
+- Set up `.env` with DB, mail, Gemini API key, and SSL options
+- Import `myzuwa_schema.sql` using phpMyAdmin
+- Run `composer install` and `php artisan migrate` on the server
+- Set correct permissions for `storage` and `bootstrap/cache`
 
 ## 🤝 Contributing
 
@@ -177,10 +203,12 @@ For support and questions:
 
 ## 🗺 Roadmap
 
-- [ ] Backend API implementation
-- [ ] Database integration
-- [ ] Email automation
-- [ ] Advanced analytics
+- [x] Backend API implementation (Laravel)
+- [x] Database integration (MySQL, see `myzuwa_schema.sql`)
+- [x] Email automation (confirmation email)
+- [x] Gemini AI-powered admin security agent
+- [x] Logo upload and social media management
+- [x] Advanced analytics
 - [ ] Multi-language support
 - [ ] A/B testing framework
 - [ ] Mobile app companion
