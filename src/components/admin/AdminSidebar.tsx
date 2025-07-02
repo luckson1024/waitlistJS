@@ -14,9 +14,10 @@ import {
 
 interface AdminSidebarProps {
   activeSection: string;
-  onSectionChange: (section: string) => void;
+  setActiveSection: (section: string) => void;
   onLogout: () => void;
   isCollapsed: boolean;
+  toggleCollapse?: () => void; // Added optional toggleCollapse prop
 }
 
 interface NavItem {
@@ -57,9 +58,10 @@ const navItems: NavItem[] = [
 
 export default function AdminSidebar({ 
   activeSection, 
-  onSectionChange, 
+  setActiveSection, 
   onLogout, 
-  isCollapsed 
+  isCollapsed,
+  toggleCollapse
 }: AdminSidebarProps) {
   const [expandedItems, setExpandedItems] = React.useState<string[]>(['content']);
 
@@ -84,7 +86,7 @@ export default function AdminSidebar({
             if (hasChildren) {
               toggleExpanded(item.id);
             } else {
-              onSectionChange(item.id);
+              setActiveSection(item.id);
             }
           }}
           className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 ${
@@ -126,7 +128,7 @@ export default function AdminSidebar({
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-orange-100 rounded-lg p-2">
             <LayoutDashboard className="h-6 w-6 text-orange-600" />
@@ -138,6 +140,16 @@ export default function AdminSidebar({
             </div>
           )}
         </div>
+        {/* Collapse/Expand button for desktop */}
+        {toggleCollapse && (
+          <button
+            onClick={toggleCollapse}
+            className="hidden lg:block p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+        )}
       </div>
 
       {/* Navigation */}

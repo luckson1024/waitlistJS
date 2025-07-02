@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Save, 
-  RotateCcw, 
-  Download, 
   Upload, 
   Globe, 
   Mail, 
@@ -24,11 +21,15 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { SiteSettings } from '../../types/settings';
 
 export default function AdminSiteSettings() {
-  const { settings, updateSettings, exportSettings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState<SiteSettings>(settings);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [showApiKeys, setShowApiKeys] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState(settings.geminiApiKey || '');
+  const [geminiModels, setGeminiModels] = useState<string[]>(settings.geminiModels || []);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelError, setModelError] = useState('');
 
   const handleInputChange = (field: keyof SiteSettings | string, value: unknown) => {
     const keys = field.split('.');
@@ -93,22 +94,24 @@ export default function AdminSiteSettings() {
     setHasChanges(false);
   };
 
-
-  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedSettings = JSON.parse(e.target?.result as string);
-          setLocalSettings(importedSettings);
-          setHasChanges(true);
-        } catch {
-          alert('Invalid settings file format');
-        }
-      };
-      reader.readAsText(file);
+  // Fetch Gemini models from Google API
+  const fetchGeminiModels = async (apiKey: string) => {
+    setLoadingModels(true);
+    setModelError('');
+    try {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + apiKey);
+      if (!res.ok) throw new Error('Failed to fetch models');
+      const data = await res.json();
+      if (data.models) {
+        setGeminiModels(data.models.map((m: any) => m.name));
+        handleInputChange('geminiModels', data.models.map((m: any) => m.name));
+      } else {
+        setModelError('No models found');
+      }
+    } catch (err) {
+      setModelError('Could not load models. Check your API key.');
     }
+    setLoadingModels(false);
   };
 
   const tabs = [
@@ -124,7 +127,8 @@ export default function AdminSiteSettings() {
     { id: 'footer', label: 'Footer', icon: FileText },
     { id: 'features', label: 'Features', icon: Wrench },
     { id: 'maintenance', label: 'Maintenance', icon: AlertTriangle },
-    { id: 'legal', label: 'Legal', icon: FileText }
+    { id: 'legal', label: 'Legal', icon: FileText },
+    { id: 'gemini', label: 'Gemini API', icon: Shield }
   ];
 
   const renderInput = (
@@ -607,94 +611,85 @@ export default function AdminSiteSettings() {
           </div>
         );
 
+      case 'gemini':
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">Gemini API Settings</h3>
+            <div className="space-y-4 max-w-lg w-full">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Gemini API Key</label>
+                <input
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={e => setGeminiApiKey(e.target.value)}
+                  placeholder="Enter your Gemini API key"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleInputChange('geminiApiKey', geminiApiKey);
+                    fetchGeminiModels(geminiApiKey);
+                  }}
+                  className="mt-2 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+                  disabled={loadingModels}
+                >
+                  {loadingModels ? 'Loading Models...' : 'Save & Load Models'}
+                </button>
+                {modelError && <div className="text-red-500 text-sm mt-2">{modelError}</div>}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Available Gemini Models</label>
+                <ul className="bg-gray-50 rounded p-3 text-sm max-h-40 overflow-y-auto">
+                  {geminiModels.length === 0 && <li className="text-gray-400">No models loaded</li>}
+                  {geminiModels.map(model => (
+                    <li key={model} className="text-gray-800">{model}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Site Settings</h2>
-          <p className="text-gray-600">Configure your site settings and preferences</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleFileImport}
-            className="hidden"
-            id="import-settings"
-          />
-          <label
-            htmlFor="import-settings"
-            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-          >
-            <Upload className="h-4 w-4" />
-            Import
-          </label>
-          
-          <button
-            onClick={exportSettings}
-            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Download className="h-4 w-4" />
-            Export
-          </button>
-
-          {hasChanges && (
-            <>
+    <div className="max-w-6xl mx-auto p-4 md:p-8">
+      <h1 className="text-3xl font-bold mb-2">Site Settings</h1>
+      <p className="text-gray-600 mb-6">Configure your site settings and preferences</p>
+      <div className="flex flex-col gap-4 md:flex-row md:gap-8">
+        <div className="flex flex-row md:flex-col gap-2 md:gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[80vh] scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-orange-50 min-w-0 md:min-w-[180px]">
+          {/* Tabs */}
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
               <button
-                onClick={handleReset}
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-l-4 md:border-l-0 md:border-l-4 md:border-l-orange-500 transition-colors rounded-lg md:rounded-none md:border-b-2 ${
+                  activeTab === tab.id
+                    ? 'border-orange-500 text-orange-600 bg-orange-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                style={{ minWidth: 120 }}
               >
-                <RotateCcw className="h-4 w-4" />
-                Reset
+                <Icon className="h-4 w-4" />
+                {tab.label}
               </button>
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-              >
-                <Save className="h-4 w-4" />
-                Save Changes
-              </button>
-            </>
-          )}
+            );
+          })}
         </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <div className="flex overflow-x-auto">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-orange-500 text-orange-600 bg-orange-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
+        <div className="flex-1 min-w-0">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-6 w-full max-w-full lg:max-w-4xl mx-auto">
+              {renderTabContent()}
+            </div>
           </div>
         </div>
-
-        {/* Tab Content */}
-        <div className="p-6">
-          {renderTabContent()}
-        </div>
       </div>
-
       {/* Save Indicator */}
       {hasChanges && (
         <div className="fixed bottom-4 right-4 bg-orange-100 border border-orange-200 rounded-lg p-4 shadow-lg">

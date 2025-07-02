@@ -11,11 +11,12 @@ import { updateWaitlistEntry } from '../services/waitlistService';
 
 interface WaitlistFormProps {
   initialEmail: string;
+  entryId: string | null;
   onFormSubmit: (data: WaitlistFormData) => void;
   onBack: () => void;
 }
 
-export default function WaitlistForm({ initialEmail, onFormSubmit, onBack }: WaitlistFormProps) {
+export default function WaitlistForm({ initialEmail, entryId, onFormSubmit, onBack }: WaitlistFormProps) {
   const { content } = useContent();
   const { settings } = useSettings();
   const [formData, setFormData] = useState<WaitlistFormData>({
@@ -53,7 +54,12 @@ export default function WaitlistForm({ initialEmail, onFormSubmit, onBack }: Wai
     setIsLoading(true);
 
     try {
-      const response = await updateWaitlistEntry(formData.email, formData);
+      if (!entryId) {
+        setErrors({ form: 'Missing waitlist entry ID.' });
+        setIsLoading(false);
+        return;
+      }
+      const response = await updateWaitlistEntry(entryId, formData);
       if (response.success) {
         onFormSubmit(formData);
       } else {

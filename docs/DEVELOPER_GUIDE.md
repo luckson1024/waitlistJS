@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides comprehensive information for developers working on the Myzuwa Waitlist Platform with a Laravel PHP backend, MySQL database, and React frontend. It covers architecture, setup, development workflows, and best practices for InfinityFree or similar shared PHP hosting.
+This guide provides comprehensive information for developers working on the Myzuwa Waitlist Platform with a Laravel PHP backend, MySQL database, and React frontend. It covers architecture, setup, development workflows, and best practices for InfinityFree or similar shared PHP hosting. All features, including AI agent, Gemini API, confirmation email, logo upload, and social media integration, are documented. The database schema is provided in `database/myzuwa_schema.sql`.
 
 ---
 
@@ -45,7 +45,8 @@ php artisan key:generate
 4. **Set up the database:**
 
 - Create a new MySQL database.
-- Update the `.env` file with your database credentials.
+- Import the schema from `database/myzuwa_schema.sql` using phpMyAdmin.
+- Update the `.env` file with your database credentials and SSL options if available.
 - Run the migrations and seed the database (optional):
 
 ```bash
@@ -59,57 +60,24 @@ php artisan db:seed
 php artisan serve
 ```
 
-### Frontend (React)
+---
 
-1. **In a new terminal, navigate to the frontend folder:**
+## 3. Frontend (React)
 
-```bash
-cd frontend
-```
-
-2. **Install JavaScript dependencies:**
-
-```bash
-npm install
-```
-
-3. **Start the React development server (for local development only):**
-
-```bash
-npm run dev
-```
-
-4. **Build the frontend for production (to upload to InfinityFree):**
-
-```bash
-npm run build
-```
-- Upload the contents of the `dist/` folder to your InfinityFree `htdocs` or `public_html` directory.
-
-## 3. API Integration
-
-- The React frontend communicates with the Laravel backend via REST API endpoints.
-- Update API URLs in the frontend as needed (see `API.md` for available endpoints).
-- The backend API must be deployed as a Laravel PHP app on InfinityFree or a compatible PHP host.
-
-## 4. Testing
-
-- Use Laravel's built-in test tools for backend testing:
-
-```bash
-php artisan test
-```
-
-- Use React Testing Library and Jest for frontend testing:
-
-```bash
-npm test
-```
-
-## 5. Deployment
-
-- See `DEPLOYMENT.md` for detailed deployment steps for InfinityFree or similar shared PHP hosting.
+- See `README.md` for frontend setup and build instructions.
 
 ---
 
-For more details, see the other docs in this folder.
+## 4. Security & Best Practices
+
+- Use strong, unique passwords for DB users.
+- Never commit `.env` to version control.
+- Use SSL for MySQL if your host supports it (see `.env` and `DEPLOYMENT.md`).
+- Store sensitive settings (Gemini API key, etc.) securely in the database and `.env`.
+- Use Laravel validation and policies for all input and admin actions.
+
+---
+
+## 5. Database Schema
+
+- See `DATABASE.md` and `database/myzuwa_schema.sql` for the latest schema and table definitions.

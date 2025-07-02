@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Save, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { useContent } from '../../contexts/ContentContext';
 import { SiteContent } from '../../types/content';
+import api from '../../services/api';
 
 interface ContentEditorProps {
   section: string;
@@ -107,11 +108,63 @@ export default function ContentEditor({ section }: ContentEditorProps) {
     </div>
   );
 
+  // Logo upload handler
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState('');
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('logo', file);
+    setUploadingLogo(true);
+    setLogoError('');
+    try {
+      const res = await api.post('/admin/upload-logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.success) {
+        setLocalContent(prev => ({ ...prev, logoUrl: res.data.url }));
+        setHasChanges(true);
+      } else {
+        setLogoError('Upload failed');
+      }
+    } catch (err) {
+      setLogoError('Upload failed');
+    }
+    setUploadingLogo(false);
+  };
+
   const renderBrandSettings = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900">Brand Settings</h3>
       {renderInput('Site Name', 'siteName', 'text', 'MYZUWA')}
       {renderInput('Logo URL', 'logoUrl', 'url', 'https://example.com/logo.png')}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Upload Logo</label>
+        <div className="flex items-center gap-4">
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInput}
+            style={{ display: 'none' }}
+            onChange={handleLogoFileChange}
+          />
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            disabled={uploadingLogo}
+            className="px-4 py-2 bg-orange-600 text-white rounded"
+          >
+            {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+          </button>
+          {localContent.logoUrl && (
+            <img src={localContent.logoUrl} alt="Logo Preview" className="h-10 w-auto rounded shadow border" />
+          )}
+        </div>
+        {logoError && <div className="text-red-500 text-sm mt-2">{logoError}</div>}
+      </div>
     </div>
   );
 
@@ -186,6 +239,11 @@ export default function ContentEditor({ section }: ContentEditorProps) {
       {renderInput('Success Subtitle', 'successSubtitle', 'text')}
       {renderInput('Success Description', 'successDescription', 'text')}
       
+      <div className="border-t pt-6">
+        <h4 className="font-medium text-gray-900 mb-4">Social Media Section</h4>
+        {renderInput('Social Media Heading', 'socialMediaHeading', 'text', 'Like Our Social Media Accounts')}
+      </div>
+
       <div className="border-t pt-6">
         <h4 className="font-medium text-gray-900 mb-4">Information Cards</h4>
         <div className="grid md:grid-cols-2 gap-6">

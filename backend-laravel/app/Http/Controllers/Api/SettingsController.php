@@ -18,6 +18,21 @@ class SettingsController extends Controller
     }
 
     /**
+     * Helper to update .env value
+     */
+    protected function setEnvValue($key, $value)
+    {
+        $path = base_path('.env');
+        if (file_exists($path)) {
+            file_put_contents($path, preg_replace(
+                "/^{$key}=.*/m",
+                "{$key}=\"{$value}\"",
+                file_get_contents($path)
+            ));
+        }
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request)
@@ -38,8 +53,30 @@ class SettingsController extends Controller
 
         foreach ($request->settings as $setting) {
             SiteSetting::where('key', $setting['key'])->update(['value' => $setting['value']]);
+            if ($setting['key'] === 'geminiApiKey') {
+                $this->setEnvValue('GEMINI_API_KEY', $setting['value']);
+            }
         }
 
         return response()->json(['success' => true, 'data' => null]);
+    }
+
+    /**
+     * Upload logo file and return public URL.
+     */
+    public function uploadLogo(Request $request)
+    {
+        $request->validate([
+            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+        ]);
+
+        $file = $request->file('logo');
+        $path = $file->store('public/logos');
+        $url = asset(str_replace('public/', 'storage/', $path));
+
+        // Optionally: Save $url to your settings table/model
+        // SiteSetting::where('key', 'logoUrl')->update(['value' => $url]);
+
+        return response()->json(['success' => true, 'url' => $url]);
     }
 }

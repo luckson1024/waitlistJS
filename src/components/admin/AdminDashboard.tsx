@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Download, 
-  Filter, 
-  Search, 
-  Calendar,
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Users,
+  Download,
+  Filter,
+  Search,
   MapPin,
   Building,
   Mail,
@@ -13,6 +12,7 @@ import {
   Store,
   BarChart3,
   TrendingUp,
+  Trash2,
   Menu,
   X
 } from 'lucide-react';
@@ -20,6 +20,9 @@ import { WaitlistFormData } from '../../types/waitlist';
 import AdminSidebar from './AdminSidebar';
 import ContentEditor from './ContentEditor';
 import AdminSiteSettings from './SiteSettings';
+import SecurityAIAgent from './SecurityAIAgent';
+import { deleteWaitlistEntry, bulkDeleteWaitlistEntries } from '../../services/waitlistService';
+import api from '../../services/api';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -29,8 +32,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [waitlistData, setWaitlistData] = useState<(WaitlistFormData & { id: number; createdAt: string })[]>([]);
   const [filteredData, setFilteredData] = useState<(WaitlistFormData & { id: number; createdAt: string })[]>([]);
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     country: '',
@@ -38,13 +39,23 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     hasStore: '',
     wantsTutorial: ''
   });
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const fetchWaitlistData = useCallback(async () => {
+    try {
+      const response = await api.get('/waitlist');
+      setWaitlistData(response.data.data);
+      setFilteredData(response.data.data);
+    } catch (error) {
+      console.error('Error fetching waitlist data:', error);
+      alert('Failed to load waitlist data.');
+    }
+  }, []);
 
   useEffect(() => {
-    // Load data from localStorage
-    const data = JSON.parse(localStorage.getItem('waitlistData') || '[]');
-    setWaitlistData(data);
-    setFilteredData(data);
-  }, []);
+    fetchWaitlistData();
+  }, [fetchWaitlistData]);
 
   useEffect(() => {
     // Apply filters
@@ -128,6 +139,36 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     ).sort(([,a], [,b]) => b - a).slice(0, 3)
   };
 
+  // Delete a single entry
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this entry?')) {
+      try {
+        await deleteWaitlistEntry(id);
+        alert('Entry deleted successfully!');
+        fetchWaitlistData(); // Re-fetch data to update the table
+      } catch (error) {
+        console.error('Error deleting entry:', error);
+        alert('Failed to delete entry.');
+      }
+    }
+  };
+
+  // Bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm('Delete all selected entries? This cannot be undone.')) {
+      try {
+        await bulkDeleteWaitlistEntries(selectedIds);
+        alert('Selected entries deleted successfully!');
+        setSelectedIds([]);
+        fetchWaitlistData(); // Re-fetch data to update the table
+      } catch (error) {
+        console.error('Error bulk deleting entries:', error);
+        alert('Failed to delete selected entries.');
+      }
+    }
+  };
+
   const renderDashboard = () => (
     <div className="space-y-8">
       {/* Stats Cards */}
@@ -199,8 +240,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <div className="relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="relative col-span-full sm:col-span-1">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <input
               type="text"
@@ -257,16 +298,38 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       {/* Data Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h3 className="text-lg font-semibold text-gray-900">
             Waitlist Entries ({filteredData.length})
           </h3>
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch md:items-center">
+            <button
+              onClick={handleBulkDelete}
+              disabled={selectedIds.length === 0}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </button>
+          </div>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={filteredData.length > 0 && selectedIds.length === filteredData.length}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        setSelectedIds(filteredData.map(item => item.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User Info
                 </th>
@@ -282,14 +345,25 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Preferences
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
+                <th className="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item.id)}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setSelectedIds(ids => [...ids, item.id]);
+                        } else {
+                          setSelectedIds(ids => ids.filter(id => id !== item.id));
+                        }
+                      }}
+                    />
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="bg-orange-100 rounded-full p-2 mr-3">
@@ -357,11 +431,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-600 hover:text-red-800 px-2 py-1 rounded"
+                      title="Delete entry"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -411,105 +488,53 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     </div>
   );
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'dashboard':
-        return renderDashboard();
-      case 'waitlist':
-        return renderDashboard(); // Same as dashboard for now
-      case 'content-brand':
-      case 'content-homepage':
-      case 'content-forms':
-      case 'content-success':
-        return <ContentEditor section={activeSection} />;
-      case 'settings':
-        return <AdminSiteSettings />;
-      default:
-        return renderDashboard();
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden">
-          <div className="fixed inset-y-0 left-0 w-64 bg-white z-50">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <AdminSidebar
-              activeSection={activeSection}
-              onSectionChange={(section) => {
-                setActiveSection(section);
-                setMobileMenuOpen(false);
-              }}
-              onLogout={onLogout}
-              isCollapsed={false}
-            />
-          </div>
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar 
+        activeSection={activeSection} 
+        setActiveSection={setActiveSection} 
+        onLogout={onLogout} 
+        isCollapsed={isSidebarCollapsed}
+        toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        {/* Header for mobile/collapsed sidebar */}
+        <div className="lg:hidden flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            {isSidebarCollapsed ? <Menu className="h-6 w-6" /> : <X className="h-6 w-6" />}
+          </button>
         </div>
-      )}
-
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
-        <AdminSidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          onLogout={onLogout}
-          isCollapsed={sidebarCollapsed}
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="lg:hidden p-2 text-gray-500 hover:text-gray-700"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="hidden lg:block p-2 text-gray-500 hover:text-gray-700"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {activeSection === 'dashboard' && 'Dashboard'}
-                    {activeSection === 'waitlist' && 'Waitlist Management'}
-                    {activeSection.startsWith('content-') && 'Content Management'}
-                    {activeSection === 'settings' && 'Site Settings'}
-                  </h1>
-                  <p className="text-sm text-gray-600">
-                    {activeSection === 'dashboard' && 'Overview of your waitlist performance'}
-                    {activeSection === 'waitlist' && 'Manage waitlist entries and exports'}
-                    {activeSection.startsWith('content-') && 'Edit frontend content and copy'}
-                    {activeSection === 'settings' && 'Configure site settings and preferences'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Section Navigation */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <button onClick={() => setActiveSection('dashboard')} className={activeSection === 'dashboard' ? 'bg-orange-600 text-white px-4 py-2 rounded' : 'bg-white px-4 py-2 rounded border'}>Dashboard</button>
+          <button onClick={() => setActiveSection('content')} className={activeSection === 'content' ? 'bg-orange-600 text-white px-4 py-2 rounded' : 'bg-white px-4 py-2 rounded border'}>Content</button>
+          <button onClick={() => setActiveSection('settings')} className={activeSection === 'settings' ? 'bg-orange-600 text-white px-4 py-2 rounded' : 'bg-white px-4 py-2 rounded border'}>Settings</button>
+          <button onClick={() => setActiveSection('ai-security')} className={activeSection === 'ai-security' ? 'bg-orange-600 text-white px-4 py-2 rounded' : 'bg-white px-4 py-2 rounded border'}>AI Security Agent</button>
         </div>
-
-        {/* Page Content */}
-        <div className="flex-1 p-4 sm:p-6 lg:p-8">
-          {renderContent()}
-        </div>
-      </div>
+        {/* Section Content */}
+        {activeSection === 'dashboard' && (
+          renderDashboard()
+        )}
+        {(activeSection === 'content' ||
+          activeSection === 'content-brand' ||
+          activeSection === 'content-homepage' ||
+          activeSection === 'content-forms' ||
+          activeSection === 'content-success') && (
+          <ContentEditor section={
+            activeSection === 'content' ? 'content-homepage' : activeSection
+          } />
+        )}
+        {activeSection === 'settings' && (
+          <AdminSiteSettings />
+        )}
+        {activeSection === 'ai-security' && (
+          <SecurityAIAgent />
+        )}
+      </main>
     </div>
   );
 }

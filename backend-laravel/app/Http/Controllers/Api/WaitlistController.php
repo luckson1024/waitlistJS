@@ -31,7 +31,7 @@ class WaitlistController extends Controller
     public function captureEmail(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:waitlist_entries,email',
+            'email' => 'required|email',
         ]);
 
         if ($validator->fails()) {
@@ -42,7 +42,23 @@ class WaitlistController extends Controller
             ]], 422);
         }
 
-        $entry = WaitlistEntry::create($request->only('email'));
+        $existing = WaitlistEntry::where('email', $request->email)->first();
+        if ($existing) {
+            if ($existing->status === 'completed') {
+                return response()->json(['success' => false, 'error' => [
+                    'code' => 'EMAIL_USED',
+                    'message' => 'This email is already used by someone. Please try another email.'
+                ]], 409);
+            } else {
+                // Allow to proceed if not completed
+                return response()->json(['success' => true, 'data' => $existing], 200);
+            }
+        }
+
+        $entry = WaitlistEntry::create([
+            'email' => $request->email,
+            'status' => 'pending',
+        ]);
 
         return response()->json(['success' => true, 'data' => $entry], 201);
     }
@@ -98,7 +114,9 @@ class WaitlistController extends Controller
             ]], 422);
         }
 
-        $entry->update($request->all());
+        $data = $request->all();
+        $data['status'] = 'completed';
+        $entry->update($data);
 
         return response()->json(['success' => true, 'data' => $entry]);
     }
@@ -118,6 +136,29 @@ class WaitlistController extends Controller
         }
 
         $entry->delete();
+
+        return response()->json(['success' => true, 'data' => null]);
+    }
+
+    /**
+     * Remove multiple specified resources from storage.
+     */
+    public function bulkDelete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'exists:waitlist_entries,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'error' => [
+                'code' => 'VALIDATION_ERROR',
+                'message' => 'Invalid input.',
+                'details' => $validator->errors()
+            ]], 422);
+        }
+
+        WaitlistEntry::whereIn('id', $request->ids)->delete();
 
         return response()->json(['success' => true, 'data' => null]);
     }

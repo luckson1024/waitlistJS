@@ -1,8 +1,8 @@
-import React from 'react';
-import { CheckCircle, Mail, BookOpen, Bell, ArrowRight, Music, ShoppingBag } from 'lucide-react';
+import { CheckCircle, Mail, BookOpen, Bell, ArrowRight, Music, ShoppingBag, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { useContent } from '../contexts/ContentContext';
 import { useSettings } from '../contexts/SettingsContext';
 import Footer from './Footer';
+import { useNavigate } from 'react-router-dom';
 
 interface SuccessMessageProps {
   email: string;
@@ -12,6 +12,30 @@ interface SuccessMessageProps {
 export default function SuccessMessage({ email, wantsTutorialBook }: SuccessMessageProps) {
   const { content } = useContent();
   const { settings } = useSettings();
+  const navigate = useNavigate();
+
+  // Social media platforms to show
+  const socialPlatforms = [
+    { name: 'Facebook', url: settings.socialMedia.facebook, icon: 'facebook' },
+    { name: 'Twitter', url: settings.socialMedia.twitter, icon: 'twitter' },
+    { name: 'Instagram', url: settings.socialMedia.instagram, icon: 'instagram' },
+    { name: 'LinkedIn', url: settings.socialMedia.linkedin, icon: 'linkedin' },
+    { name: 'YouTube', url: settings.socialMedia.youtube, icon: 'youtube' },
+    { name: 'TikTok', url: settings.socialMedia.tiktok, icon: 'tiktok' },
+  ];
+
+  // Helper to render Lucide icon
+  const renderIcon = (platform: string) => {
+    switch (platform) {
+      case 'facebook': return <Facebook className="h-5 w-5 text-blue-600" />;
+      case 'twitter': return <Twitter className="h-5 w-5 text-blue-400" />;
+      case 'instagram': return <Instagram className="h-5 w-5 text-pink-500" />;
+      case 'linkedin': return <Linkedin className="h-5 w-5 text-blue-700" />;
+      case 'youtube': return <Youtube className="h-5 w-5 text-red-600" />;
+      case 'tiktok': return <span className="h-5 w-5 text-black font-bold">Tt</span>; // fallback
+      default: return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -40,9 +64,12 @@ export default function SuccessMessage({ email, wantsTutorialBook }: SuccessMess
                   </>
                 )}
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                {content.successTitle}
-              </h1>
+              {/* Hide site name if logo is present */}
+              {!settings.logoUrl && (
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                  {content.successTitle}
+                </h1>
+              )}
             </div>
 
             <div className="mb-8">
@@ -136,6 +163,38 @@ export default function SuccessMessage({ email, wantsTutorialBook }: SuccessMess
                 ))}
               </div>
             </div>
+
+            {/* Social Media Section */}
+            <div className="mb-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                {content.socialMediaHeading || 'Like Our Social Media Accounts'}
+              </h3>
+              <div className="flex flex-wrap justify-center gap-4">
+                {socialPlatforms.map((platform) =>
+                  platform.url ? (
+                    <a
+                      key={platform.name}
+                      href={platform.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 shadow-sm transition"
+                    >
+                      {renderIcon(platform.icon)}
+                      <span>{platform.name}</span>
+                    </a>
+                  ) : null
+                )}
+              </div>
+            </div>
+
+            {/* Finish Button */}
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Finish
+            </button>
           </div>
 
           {/* Footer Message */}
@@ -152,7 +211,6 @@ export default function SuccessMessage({ email, wantsTutorialBook }: SuccessMess
           </div>
         </div>
       </div>
-      
       {/* Footer */}
       {settings.footerSettings.showFooter && <Footer />}
     </div>

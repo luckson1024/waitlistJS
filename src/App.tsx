@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ContentProvider } from './contexts/ContentContext';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -12,9 +12,11 @@ import { WaitlistFormData, FormStep } from './types/waitlist';
 function WaitlistFlow() {
   const [currentStep, setCurrentStep] = useState<FormStep>('email');
   const [formData, setFormData] = useState<Partial<WaitlistFormData>>({});
+  const [entryId, setEntryId] = useState<string | null>(null);
 
-  const handleEmailSubmit = (email: string) => {
+  const handleEmailSubmit = (email: string, id: string) => {
     setFormData({ ...formData, email });
+    setEntryId(id);
     setCurrentStep('details');
   };
 
@@ -39,6 +41,7 @@ function WaitlistFlow() {
       {currentStep === 'details' && (
         <WaitlistForm 
           initialEmail={formData.email || ''}
+          entryId={entryId}
           onFormSubmit={handleFormSubmit}
           onBack={handleBackToEmail}
         />

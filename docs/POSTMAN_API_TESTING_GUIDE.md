@@ -1,6 +1,6 @@
 # Postman API Testing Guide for Myzuwa Waitlist Platform
 
-This guide will help you use Postman to test your Laravel API endpoints, even if you are new to Postman. Follow each step carefully.
+This guide will help you use Postman to test your Laravel API endpoints, including Gemini AI, confirmation email, logo upload, and all admin features. The database schema is provided in `database/myzuwa_schema.sql`. Follow each step carefully.
 
 ---
 
@@ -32,7 +32,13 @@ Postman is a free tool for testing APIs. It lets you send requests to your backe
 
 ---
 
-## 5. Test the Email Capture Endpoint
+## 5. Import the Database Schema
+- Use phpMyAdmin to import `database/myzuwa_schema.sql` before testing.
+- Ensure your `.env` is set up for your MySQL database and SSL if available.
+
+---
+
+## 6. Test the Email Capture Endpoint
 ### a. Create a New Request
 1. Click "+ New" > "HTTP Request".
 2. Set method to `POST`.
@@ -52,65 +58,32 @@ Postman is a free tool for testing APIs. It lets you send requests to your backe
 
 ---
 
-## 6. Test the Waitlist Update Endpoint
+## 7. Test the Waitlist Update Endpoint
 1. Use the ID returned from the email capture response.
 2. Create a new request:
    - Method: `PUT`
    - URL: `{{base_url}}/waitlist/{id}` (replace `{id}` with the actual ID)
    - Body: `raw` JSON, e.g.:
-     ```json
-     {
-       "name": "John Doe",
-       "country": "Nigeria",
-       "phone": "+2348012345678"
-     }
-     ```
-3. Click "Send" and check the response.
+   ```json
+   {
+     "full_name": "Jane Doe",
+     "country": "Nigeria"
+   }
+   ```
+3. Click "Send".
 
 ---
 
-## 7. Test Admin Login (if implemented)
-1. Create a new request:
-   - Method: `POST`
-   - URL: `{{base_url}}/auth/login`
-   - Body: `raw` JSON:
-     ```json
-     {
-       "email": "admin@myzuwa.com",
-       "password": "yourpassword"
-     }
-     ```
-2. Click "Send". You should receive a token if successful.
+## 8. Test Gemini AI Security Agent
+- Use the `/ai/security` endpoint with your Gemini API key set in settings.
+- See `API.md` for details.
 
 ---
 
-## 8. Test Other Endpoints
-- Use the same approach for other endpoints (see `API.md` for details).
-- Always set the correct HTTP method, URL, and body.
-- For authenticated endpoints, add an `Authorization` header:
-  - Key: `Authorization`
-  - Value: `Bearer {token}` (replace `{token}` with your actual token)
+## 9. More Endpoints
+- See `API.md` for all available endpoints.
+- See `DATABASE.md` and `database/myzuwa_schema.sql` for schema details.
 
 ---
 
-## 9. Troubleshooting
-- If you get a CORS error, make sure your backend allows requests from your frontend or Postman.
-- If you get a 404, check the URL and method.
-- If you get a 422, check your request body for missing or invalid fields.
-- Check your Laravel logs (`storage/logs/laravel.log`) for backend errors.
-
----
-
-## 10. Saving and Reusing Requests
-- Click "Save" after creating a request to add it to a collection for future use.
-- You can export and share collections with your team.
-
----
-
-## 11. More Resources
-- [Postman Learning Center](https://learning.postman.com/)
-- [Myzuwa API Documentation](./API.md)
-
----
-
-**You are now ready to test your API with Postman!**
+**You are now ready to test your API with Postman, including Gemini AI, confirmation email, logo upload, and all admin features!**

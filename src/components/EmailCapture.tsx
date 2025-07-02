@@ -7,7 +7,7 @@ import Footer from './Footer';
 import { captureEmail } from '../services/waitlistService';
 
 interface EmailCaptureProps {
-  onEmailSubmit: (email: string) => void;
+  onEmailSubmit: (email: string, entryId: string) => void;
 }
 
 export default function EmailCapture({ onEmailSubmit }: EmailCaptureProps) {
@@ -32,12 +32,20 @@ export default function EmailCapture({ onEmailSubmit }: EmailCaptureProps) {
     try {
       const response = await captureEmail(email);
       if (response.success) {
-        onEmailSubmit(email);
+        onEmailSubmit(email, response.data.id); // Pass entryId
       } else {
-        setError(response.error?.message || 'An unexpected error occurred.');
+        if (response.error?.code === 'EMAIL_USED') {
+          setError('This email is already used by someone. Please try another email.');
+        } else {
+          setError(response.error?.message || 'An unexpected error occurred.');
+        }
       }
-    } catch {
-      setError('Failed to submit email. Please try again.');
+    } catch (err: any) {
+      if (err?.response?.status === 409 && err?.response?.data?.error?.code === 'EMAIL_USED') {
+        setError('This email is already used by someone. Please try another email.');
+      } else {
+        setError('Failed to submit email. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

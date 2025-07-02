@@ -2,7 +2,7 @@
 
 ## Overview
 
-The API is now powered by Laravel PHP and MySQL, designed for compatibility with InfinityFree and similar hosts.
+The API is powered by Laravel PHP and MySQL, designed for compatibility with InfinityFree and similar hosts. It supports all waitlist, admin, content, settings, AI, and email features. The database schema is defined in `database/myzuwa_schema.sql`.
 
 ## Base URL
 
@@ -24,20 +24,32 @@ https://your-infinityfree-domain/api/v1/
 - `GET /waitlist` — List waitlist entries (admin)
 - `GET /waitlist/{id}` — Get single entry (admin)
 - `DELETE /waitlist/{id}` — Delete entry (admin)
+- `POST /waitlist/bulk-delete` — Bulk delete entries (admin)
 
 ### Admin
 
 - `POST /auth/login` — Admin login
 - `POST /admin/content` — Update frontend content
 - `GET /admin/settings` — Get site settings
-- `PUT /admin/settings` — Update site settings
+- `PUT /admin/settings` — Update site settings (including Gemini API key, Gemini models, confirmation email message, logo, social links)
 - `GET /admin/stats` — Get statistics
 - `GET /admin/export` — Export waitlist data (CSV)
+- `POST /admin/upload-logo` — Upload site logo
 
 ### Content & Settings
 
 - `GET /content` — Get all frontend content
 - `GET /settings` — Get all site settings
+
+### AI Security Agent
+
+- `POST /ai/security` — Chat with Gemini-powered security agent (requires Gemini API key in settings)
+
+### Email
+
+- Confirmation emails are sent on waitlist registration using the customizable message in settings.
+- `GET /admin/email-template` — Get confirmation email template/message
+- `PUT /admin/email-template` — Update confirmation email template/message
 
 ## Request/Response Format
 
@@ -51,6 +63,11 @@ All responses use:
   "meta": {}
 }
 ```
+
+## Notes
+- See `DATABASE.md` and `database/myzuwa_schema.sql` for schema details.
+- All endpoints are extensible for future admin features.
+- Gemini AI integration is available for admin security and compliance.
 
 ## Example: Email Capture
 
@@ -94,4 +111,4 @@ All responses use:
 
 ---
 
-See `DEVELOPER_GUIDE.md` for more details on request validation and authentication.
+See `DEVELOPER_GUIDE.md` for more details on request validation, authentication, and new features (Gemini, confirmation email, logo upload, etc.).

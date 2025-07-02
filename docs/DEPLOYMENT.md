@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to deploy the Myzuwa Waitlist Platform using a Laravel PHP backend and a React static frontend on InfinityFree or similar PHP/MySQL hosts.
+This guide explains how to deploy the Myzuwa Waitlist Platform using a Laravel PHP backend and a React static frontend on InfinityFree or similar PHP/MySQL hosts. All features, including Gemini AI, confirmation email, logo upload, and admin extensibility, are supported. The database schema is provided in `database/myzuwa_schema.sql`.
 
 ---
 
@@ -21,7 +21,7 @@ This guide explains how to deploy the Myzuwa Waitlist Platform using a Laravel P
   composer create-project laravel/laravel backend-laravel
   ```
 - Copy your backend code into this project.
-- Configure `.env` for your InfinityFree MySQL database credentials.
+- Configure `.env` for your InfinityFree MySQL database credentials and SSL options if available.
 - Run migrations:
   ```bash
   php artisan migrate
@@ -39,7 +39,8 @@ This guide explains how to deploy the Myzuwa Waitlist Platform using a Laravel P
 ## 3. MySQL Database
 
 - Create a MySQL database in the InfinityFree control panel.
-- Update `.env` in Laravel with your DB credentials.
+- Import the schema from `database/myzuwa_schema.sql` using phpMyAdmin.
+- Update `.env` in Laravel with your DB credentials and SSL options if available.
 
 ## 4. .htaccess and Routing
 
@@ -49,15 +50,17 @@ This guide explains how to deploy the Myzuwa Waitlist Platform using a Laravel P
 ## 5. SSL
 
 - Use InfinityFree's free SSL certificates for HTTPS.
+- If your host supports MySQL SSL, set `MYSQL_ATTR_SSL_CA`, `MYSQL_ATTR_SSL_CERT`, and `MYSQL_ATTR_SSL_KEY` in `.env`.
 
 ## 6. Environment Variables
 
-- Set all sensitive config in `.env` (DB, mail, etc.).
+- Set all sensitive config in `.env` (DB, mail, Gemini API key, etc.).
 
 ## 7. Testing
 
 - Test all endpoints and frontend routes after deployment.
+- Test Gemini AI, confirmation email, logo upload, and admin panel features.
 
 ---
 
-See `ToDo.md` for phased implementation and testing checklist.
+For more details on the schema, see `DATABASE.md` and `database/myzuwa_schema.sql`.

@@ -96,6 +96,10 @@ export interface SiteSettings {
       openInNewTab: boolean;
     }>;
   };
+
+  // Gemini API
+  geminiApiKey?: string;
+  geminiModels?: string[];
 }
 
 export const defaultSiteSettings: SiteSettings = {
@@ -191,5 +195,9 @@ export const defaultSiteSettings: SiteSettings = {
     showSocialLinks: true,
     showLegalLinks: true,
     customLinks: []
-  }
+  },
+
+  // Gemini API
+  geminiApiKey: '',
+  geminiModels: [],
 };

@@ -1,27 +1,7 @@
-# Database Schema Documentation
+-- Myzuwa Waitlist Platform: MySQL Database Schema
+-- Compatible with MySQL 8.0+ and Laravel migrations
 
-## Overview
-
-The Myzuwa waitlist platform uses MySQL 8.0+ (or MariaDB 10.6+) and is fully compatible with Laravel PHP, InfinityFree, and similar hosts. This document outlines the MySQL schema, relationships, and Laravel migration notes, including support for Gemini API key/model, confirmation email message, logo, and social media settings.
-
-## Database Technology
-
-**Primary: MySQL 8.0+ / MariaDB 10.6+**
-- ACID compliance for data integrity
-- JSON support (MySQL 5.7+)
-- Excellent performance with proper indexing
-- Strong ecosystem and tooling
-
-**Backend Framework: Laravel PHP**
-- Uses Eloquent ORM and Laravel migrations
-- All schema changes should be made via Laravel migrations
-
-## Core Tables (SQL Format)
-
-### 1. Users Table
-Stores admin user accounts and authentication data.
-
-```sql
+-- 1. Users Table
 CREATE TABLE IF NOT EXISTS `users` (
     `id` CHAR(36) PRIMARY KEY,
     `username` VARCHAR(50) UNIQUE NOT NULL,
@@ -33,12 +13,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-### 2. Waitlist Entries Table
-Primary table for storing waitlist registrations.
-
-```sql
+-- 2. Waitlist Entries Table
 CREATE TABLE IF NOT EXISTS `waitlist_entries` (
     `id` CHAR(36) PRIMARY KEY,
     `email` VARCHAR(255) UNIQUE NOT NULL,
@@ -64,12 +40,8 @@ CREATE TABLE IF NOT EXISTS `waitlist_entries` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-### 3. Site Content Table
-Stores all manageable frontend content.
-
-```sql
+-- 3. Site Content Table
 CREATE TABLE IF NOT EXISTS `site_content` (
     `id` CHAR(36) PRIMARY KEY,
     `key` VARCHAR(100) UNIQUE NOT NULL,
@@ -82,12 +54,8 @@ CREATE TABLE IF NOT EXISTS `site_content` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `updated_by` CHAR(36)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-### 4. Site Settings Table
-Stores all configurable site settings, including Gemini API key, Gemini models, confirmation email message, logo URL, and social media links.
-
-```sql
+-- 4. Site Settings Table
 CREATE TABLE IF NOT EXISTS `site_settings` (
     `id` CHAR(36) PRIMARY KEY,
     `key` VARCHAR(100) UNIQUE NOT NULL,
@@ -100,19 +68,8 @@ CREATE TABLE IF NOT EXISTS `site_settings` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `updated_by` CHAR(36)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-#### Example Settings Keys
-- `gemini_api_key` (string, sensitive)
-- `gemini_models` (json)
-- `confirmation_email_message` (text)
-- `site_logo_url` (string)
-- `social_links` (json)
-
-### 5. Email Templates Table
-Stores email templates for automated communications.
-
-```sql
+-- 5. Email Templates Table
 CREATE TABLE IF NOT EXISTS `email_templates` (
     `id` CHAR(36) PRIMARY KEY,
     `name` VARCHAR(100) UNIQUE NOT NULL,
@@ -125,12 +82,8 @@ CREATE TABLE IF NOT EXISTS `email_templates` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `updated_by` CHAR(36)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-### 6. Email Queue Table
-Manages outgoing email queue and delivery status.
-
-```sql
+-- 6. Email Queue Table
 CREATE TABLE IF NOT EXISTS `email_queue` (
     `id` CHAR(36) PRIMARY KEY,
     `to_email` VARCHAR(255) NOT NULL,
@@ -149,12 +102,8 @@ CREATE TABLE IF NOT EXISTS `email_queue` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-### 7. Analytics Events Table
-Tracks user interactions and system events.
-
-```sql
+-- 7. Analytics Events Table
 CREATE TABLE IF NOT EXISTS `analytics_events` (
     `id` CHAR(36) PRIMARY KEY,
     `event_type` VARCHAR(50) NOT NULL,
@@ -171,12 +120,8 @@ CREATE TABLE IF NOT EXISTS `analytics_events` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
 
-### 8. Admin Activity Log Table
-Tracks admin actions for audit purposes.
-
-```sql
+-- 8. Admin Activity Log Table
 CREATE TABLE IF NOT EXISTS `admin_activity_log` (
     `id` CHAR(36) PRIMARY KEY,
     `user_id` CHAR(36) NOT NULL,
@@ -190,33 +135,3 @@ CREATE TABLE IF NOT EXISTS `admin_activity_log` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-## Data Relationships
-- Use Laravel Eloquent relationships (hasMany, belongsTo, etc.)
-- Use foreign keys where appropriate
-
-## Data Processing Workflows
-- Use Laravel controllers and jobs for registration, analytics, email workflows, and Gemini AI integration
-
-## Indexing & Performance
-- Add indexes in migrations as needed (e.g., `CREATE INDEX idx_email ON waitlist_entries(email);`)
-- Use Laravel query builder/Eloquent for optimized queries
-
-## Backup & Recovery
-- Use InfinityFree/MySQL tools for backups
-- Use Laravel seeders for test data
-
-## Security & GDPR
-- Use Laravel validation, encryption, and policies
-- Use parameterized queries (Eloquent)
-- Add GDPR endpoints as needed
-- Store sensitive settings (Gemini API key) securely
-
-## Migration Strategy
-- Use Laravel migrations for all schema changes
-- Use Laravel artisan commands for migration and seeding
-
----
-
-This schema is now fully compatible with MySQL and Laravel on InfinityFree, and supports all new features including Gemini AI, confirmation email, logo upload, and admin extensibility.

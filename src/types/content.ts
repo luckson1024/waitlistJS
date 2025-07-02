@@ -69,6 +69,8 @@ export interface SiteContent {
   socialProofText: string;
   socialProofCount: string;
   socialProofCategories: string[];
+  // Social Media Section
+  socialMediaHeading?: string;
 }
 
 export interface AdminNavItem {
@@ -157,5 +159,6 @@ export const defaultSiteContent: SiteContent = {
   // Social Proof
   socialProofText: "Join",
   socialProofCount: "10,000+",
-  socialProofCategories: ["Musicians", "Designers", "Entrepreneurs", "Artists"]
+  socialProofCategories: ["Musicians", "Designers", "Entrepreneurs", "Artists"],
+  socialMediaHeading: "Like Our Social Media Accounts"
 };
